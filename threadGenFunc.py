@@ -1,11 +1,12 @@
+from base64 import decode
+from encodings import utf_8
 import bs4, requests, urllib.request, pyimgur, os, pyperclip
 import itertools, threading, time, sys
 import IPython, htmlCodeForJupyter
 
 
-def parsePage(URL):
-    webpage = requests.get(URL)
-    bsPage = bs4.BeautifulSoup(webpage.text, 'html.parser')
+def parsePage():
+    bsPage = bs4.BeautifulSoup(htmldom, 'html.parser')
     return bsPage
 
 
@@ -25,7 +26,7 @@ def getHeader(bsPage):
     findLeadTitle = bsPage.find("h1", {"class": "udlite-heading-xl clp-lead__title clp-lead__title--small"}).text.strip()
     findLeadHeadline = bsPage.find("div", {"class": "udlite-text-md clp-lead__headline"}).text.strip()
     findStars = bsPage.find("span", {"class": "udlite-heading-sm star-rating--rating-number--2o8YM"}).text.strip()
-    findRating = '('+bsPage.find("div", {"class": "styles--rating-wrapper--5a0Tr"}).text.strip().split(' (')[1]
+    findRating = '('+bsPage.find("a", {"class": "styles--rating-wrapper--5a0Tr"}).text.strip().split(' (')[1]
     findEnrolledStudents = bsPage.find("div", {"data-purpose": "enrollment"}).text.strip()
     findAuthor = bsPage.find("a", {"class": "udlite-btn udlite-btn-large udlite-btn-link udlite-heading-md udlite-text-sm udlite-instructor-links"}).text.strip()
     findAuthorURL = 'https://www.udemy.com'+bsPage.find("div", {"class": "udlite-heading-lg udlite-link-underline instructor--instructor__title--34ItB"}).a['href']
@@ -38,7 +39,10 @@ def getHeader(bsPage):
 
 
 def getWhatYouWillLearn(bsPage):
-    whatYouWillLearnStr = '''[COLOR=rgb(250, 197, 28)][FONT=Arial][SIZE=26px][B][U]What you'll learn:[/U][/B][/SIZE][/FONT][/COLOR]\n[SPOILER="VIEW"]\n[List]\n'''
+    whatYouWillLearnStr = '''[COLOR=rgb(250, 197, 28)][FONT=Arial][SIZE=26px][B][U]What you'll learn:[/U][/B][/SIZE][/FONT][/COLOR]
+    [SPOILER="VIEW"]
+    [List]
+    '''
     findWhatYouWillLearn = bsPage.find_all("span", {"class": "what-you-will-learn--objective-item--ECarc"})
     for element in findWhatYouWillLearn:
         whatYouWillLearnStr += '[*][SIZE=15px]'+element.text+'[/SIZE]\n'
@@ -55,7 +59,7 @@ def getDuration(bsPage):
 
 def getRequirements(bsPage):
     requirementsStr = '''[COLOR=rgb(250, 197, 28)][FONT=Arial][SIZE=26px][B][U]Requirements:[/U][/B][/SIZE][/FONT][/COLOR]\n[SPOILER="VIEW"]\n[List]\n'''
-    findRequirements = bsPage.find("div", {"class": "ud-component--course-landing-page-udlite--requirements"}).find_all("div", {"class": "udlite-block-list-item-content"})
+    findRequirements = bsPage.find("ul", {"class": "unstyled-list udlite-block-list"}).find_all("div", {"class": "udlite-block-list-item-content"})
     for element in findRequirements:
         requirementsStr += '[*][SIZE=15px]'+element.text+'[/SIZE]\n'
     requirementsStr += '[/List]\n[/SPOILER]\n\n'
@@ -98,6 +102,7 @@ def getCourseImage(bsPage):
     courseImageURL = findImage.img['srcset'].split(', ')[1].split('.jpg 2')[0] + '.jpg'
     urllib.request.urlretrieve(courseImageURL, "course-image.jpg")
     uploadedImageURL = uploadCourseImage('course-image.jpg')
+    uploadedImageURL = courseImageURL
     if os.path.exists('course-image.jpg'):
         os.remove('course-image.jpg')
     return '[IMG]' + uploadedImageURL + '[/IMG]\n[HR][/HR]\n'
@@ -105,6 +110,7 @@ def getCourseImage(bsPage):
 
 def uploadCourseImage(courseImagePath):
     CLIENT_ID = "31172f8992ecc48"
+    print(courseImagePath)
     im = pyimgur.Imgur(CLIENT_ID)
     uploaded_image = im.upload_image(courseImagePath)
     return uploaded_image.link
@@ -147,10 +153,11 @@ def clearOutput():
         os.system('clear')
 
 
-def makeGlobal(var1, var2):
-    global jupyterCourseURL, jupyterDownloadLink
+def makeGlobal(var1, var2, var3):
+    global jupyterCourseURL, jupyterDownloadLink, htmldom
     jupyterCourseURL = var1
     jupyterDownloadLink = var2
+    htmldom = var3
 
 def jupyterBool(TorF):
     global jupyter, inpCourseURL, inpDownloadLink
@@ -240,5 +247,5 @@ def welcomeText():
     print('\n'*(int(lines/2)-6))
     for i in range(len(welcomeTextList[1:])):
         print(welcomeTextList[1:][i].center(columns-5))
-    time.sleep(5)
+    # time.sleep(5)
     print('\033[H\033[J', end='')
